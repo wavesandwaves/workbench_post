@@ -1,0 +1,43 @@
+<?php
+
+/**
+ * @file
+ * Install, update, and uninstall functions for the Workbench Post module.
+ */
+
+function workbench_post_schema() {
+  $schema = array();
+  $schema['workbench_post'] = array(
+    'description' => 'Store data for the Workbench Post module',
+    'fields' => array(
+      'data_name' => array(
+        'description' => 'The form ID of the form data we\'re saving.',
+        'type' => 'varchar',
+        'length' => 100,
+        'not null' => TRUE,
+      ),
+      'data' => array(
+        'description' => 'The form data.',
+        'type' => 'text',
+      ),
+    ),
+    'primary key' => array('data_name'),
+  );
+
+  return $schema;
+}
+
+
+function workbench_post_uninstall() {
+
+  global $conf;
+  foreach (array_keys($conf) as $key) {
+    if (strpos($key, 'workbench_post_') === 0) {
+      variable_del($key);
+    }
+  }
+
+  db_delete('workbench_post')
+    ->execute();
+}
+

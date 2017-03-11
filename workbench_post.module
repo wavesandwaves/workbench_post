@@ -1,0 +1,128 @@
+<?php
+
+/**
+ * @file
+ * Workbench Post moderation transition hooks and permissions
+ */
+include_once  'includes/workbench_post.admin.inc';
+include_once  'includes/workbench_post.defaults.inc';
+include_once  'includes/workbench_post.utils.inc';
+
+/**
+ * Return an array of emails to be sent for a given node and transition
+ *
+ * @param $node
+ * @param $transition_name
+ * @return array
+ */
+function workbench_post_collect_emails($node, $transition_name) {
+
+  $user_types = workbench_post_get_config('workbench_post_users');
+  $emails = array();
+
+  foreach ($user_types as $user_type) {
+    if ($user_type->notifyOnTransition($transition_name) ) {
+      $emails[$user_type->user_string] = $user_type->email($node, $transition_name);
+    }
+  }
+
+  return $emails;
+}
+
+/**
+ * Implements hook_workbench_moderation_transition()
+ *
+ * @param $node
+ * @param $previous_state
+ * @param $new_state
+ */
+function workbench_post_workbench_moderation_transition($node, $previous_state, $new_state) {
+
+  $transition_name = $previous_state . '_to_' . $new_state;
+  // change 'published to needs review' to 'draft to needs review' as that's expected behaviour.
+  $transition_name = $transition_name == 'published_to_needs_review' ? 'draft_to_needs_review' : $transition_name;
+
+  if (variable_get('workbench_post_' . $transition_name)) {
+
+    $emails = workbench_post_collect_emails($node, $transition_name);
+
+    foreach ($emails as $key => $email) {
+      workbench_post_send_email($node, $key, $email);
+    }
+  }
+
+}
+
+/**
+ * Send mail to user
+ *
+ * @param $node
+ * @param $key
+ * @param $email
+ */
+function workbench_post_send_email($node, $key, $email) {
+
+  $settings = workbench_post_get_config('workbench_post_form_settings');
+  $email_from = $settings['email_from'];
+
+  drupal_mail(
+    'workbench_post',
+    'workbench_transition',
+    $email['email_to'],
+    user_preferred_language($email['user_object']),
+    array(
+      'user_type' => $key,
+      'node' => $node,
+      'email' => $email,
+    ),
+    $email_from,
+    TRUE
+  );
+}
+
+/**
+ * Implements hook_mail().
+ *
+ * @param $key
+ * @param $message
+ * @param $params
+ */
+function workbench_post_mail($key, &$message, $params) {
+
+  if ($key = 'workbench_transition') {
+    $node = $params['node'];
+    $user = $params['email']['user_object'];
+    $subject = $params['email']['subject'];
+    $body = $params['email']['body'];
+    $available_tokens = array(
+        'node' => $node,
+        'user' => $user,
+    );
+
+    $from = $message['headers']['From'];
+    $message['headers']['Sender'] = $from;
+    $message['headers']['Return-Path'] = $from;
+    $message['headers']['Errors-To'] = $from;
+
+    if (module_exists('token')) {
+      $message['subject'] = token_replace($subject, $available_tokens);
+      $message['body'][] = token_replace($body, $available_tokens);
+    }
+    else {
+      $message['subject'] = $subject;
+      $message['body'][] = $body;
+    }
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function workbench_post_permission() {
+
+  return array(
+    'administer workbench post' => array(
+      'title' => t('Administer Workbench Post notification settings'),
+    ),
+  );
+}

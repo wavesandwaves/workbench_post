@@ -1,0 +1,16 @@
+name = Workbench Post
+description = Provides basic functionality for sending email notifications on workbench transitions
+core = 7.x
+version = "7.x-1.0"
+package = Workbench
+
+files[] = includes/classes/AuthorType.inc
+files[] = includes/classes/EmailUserInterface.inc
+files[] = includes/classes/NodeUserType.inc
+files[] = includes/classes/RevisionAuthorType.inc
+files[] = includes/classes/RoleUserType.inc
+files[] = includes/classes/UserType.inc
+
+dependencies[] = workbench_moderation
+dependencies[] = token
+
