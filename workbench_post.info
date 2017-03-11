@@ -1,7 +1,7 @@
 name = Workbench Post
 description = Provides basic functionality for sending email notifications on workbench transitions
 core = 7.x
-version = "7.x-1.0"
+version = "7.x-1.x"
 package = Workbench
 
 files[] = includes/classes/AuthorType.inc
