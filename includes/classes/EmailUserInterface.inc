@@ -6,5 +6,5 @@
  */
 
 interface EmailUserInterface {
-  public function email($node, $config);
+  public function email($node, $transition_name);
 }

@@ -14,12 +14,12 @@ class RoleUserType extends UserType implements EmailUserInterface {
     parent::__construct($user_label);
   }
 
-  private function createEmails($config) {
+  private function createEmails($transition_name) {
     $users = $this->loadUsers($this->rid);
     $emails = array();
 
     foreach ($users as $user_object) {
-      $emails[] = $this->buildEmail($user_object, $config);
+      $emails[] = $this->buildEmail($user_object, $transition_name);
     }
 
     return $emails;
@@ -32,8 +32,8 @@ class RoleUserType extends UserType implements EmailUserInterface {
     return $users;
   }
 
-  public function email($node, $config) {
+  public function email($node, $transition_name) {
     // TODO check user has permission against node ?
-    return $this->create_emails($config);
+    return $this->create_emails($transition_name);
   }
 }
